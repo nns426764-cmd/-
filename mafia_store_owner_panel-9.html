@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAFIA STORE</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#080808;color:#fff;font-family:Arial,sans-serif}
+header{height:70px;padding:0 7%;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #222}
+.logo{font-weight:900;font-size:22px;letter-spacing:2px}nav a{color:#aaa;text-decoration:none;margin-left:22px;font-size:13px}
+.hero{text-align:center;padding:85px 20px}.badge{display:inline-block;border:1px solid #333;padding:8px 14px;border-radius:30px;color:#aaa;font-size:12px}
+h1{font-size:clamp(48px,9vw,90px);margin:18px 0 8px;letter-spacing:5px}.hero p{color:#888}
+.btn{display:inline-block;background:#fff;color:#000;padding:12px 20px;border-radius:9px;text-decoration:none;font-weight:bold;margin-top:18px;border:0;cursor:pointer}
+section{max-width:1150px;margin:auto;padding:45px 7%}.title{text-align:center;margin-bottom:28px}.title h2{font-size:30px}.title p{color:#777}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
+.card{background:#101010;border:1px solid #242424;border-radius:16px;padding:22px;min-height:205px;display:flex;flex-direction:column;justify-content:space-between}
+.card h3{direction:rtl;text-align:right;font-size:20px;margin:0}.price{font-size:26px;font-weight:900;margin-top:18px}.buy{display:block;text-align:center;background:#fff;color:#000;padding:10px;border-radius:8px;text-decoration:none;font-weight:bold;margin-top:15px}
+.info{display:grid;grid-template-columns:1fr 1fr;gap:16px}.box{background:#101010;border:1px solid #242424;border-radius:16px;padding:22px;text-align:center}.box span{display:block;color:#777;margin-top:8px}
+footer{text-align:center;color:#666;border-top:1px solid #222;padding:28px;margin-top:35px}
+.modal{display:none;position:fixed;inset:0;background:#000b;align-items:center;justify-content:center;padding:20px;z-index:10}.panel{background:#111;border:1px solid #333;border-radius:16px;padding:24px;width:min(560px,100%);max-height:90vh;overflow:auto}.panel h2{margin-top:0}
+input{width:100%;padding:12px;margin:7px 0 12px;border-radius:8px;border:1px solid #333;background:#080808;color:#fff}.row{display:flex;gap:10px}.row>*{flex:1}
+.admin-list{margin-top:15px}.admin-item{border:1px solid #292929;padding:12px;border-radius:10px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}.danger{background:#d33;color:#fff;border:0;padding:8px;border-radius:7px;cursor:pointer}
+.small{font-size:12px;color:#777}.admin-open{background:none;color:#777;border:1px solid #333;padding:7px 10px;border-radius:7px;cursor:pointer}
+@media(max-width:650px){nav{display:none}.info{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">MAFIA STORE</div>
+<nav><a href="#home">HOME</a><a href="#store">STORE</a><a href="#support">SUPPORT</a></nav>
+<button class="admin-open" onclick="openLogin()">OWNER PANEL</button>
+</header>
+
+<section class="hero" id="home">
+<div class="badge">OFFICIAL STORE</div>
+<h1>MAFIA STORE</h1>
+<p>Premium products and services.</p>
+<a class="btn" href="#store">VIEW STORE</a>
+</section>
+
+<section id="store">
+<div class="title"><h2>STORE</h2><p>Available products</p></div>
+<div class="products" id="products"></div>
+</section>
+
+<section id="support">
+<div class="title"><h2>CONTACT</h2><p>Contact us for orders and support.</p></div>
+<div class="info">
+<div class="box"><b>DISCORD</b><span>MF</span></div>
+<div class="box"><b>OWNER</b><span>Official Owner</span></div>
+</div>
+</section>
+
+<footer>© 2026 MAFIA STORE — All Rights Reserved.</footer>
+
+<div class="modal" id="loginModal">
+<div class="panel">
+<h2>Owner Login</h2>
+<p class="small">This is a local demo. Change the PIN in the file before publishing.</p>
+<input id="pin" type="password" placeholder="Owner PIN">
+<div class="row"><button class="btn" onclick="login()">LOGIN</button><button class="btn" onclick="closeModals()">CLOSE</button></div>
+</div></div>
+
+<div class="modal" id="adminModal">
+<div class="panel">
+<h2>Owner Control Panel</h2>
+<p class="small">Add, edit, or delete products. Changes are saved in this browser.</p>
+<input id="name" placeholder="اسم المنتج">
+<input id="price" type="number" placeholder="Price in USD">
+<input id="link" placeholder="Purchase / Discord link (optional)">
+<div class="row"><button class="btn" onclick="addProduct()">ADD PRODUCT</button><button class="btn" onclick="closeModals()">CLOSE</button></div>
+<div class="admin-list" id="adminList"></div>
+</div></div>
+
+<script>
+const OWNER_PIN="2468"; // غيّر الرقم هنا قبل نشر الموقع
+const defaultProducts=[
+{name:"روتمة بج بوس",price:50,link:"#support"},
+{name:"مينيو ID",price:100,link:"#support"},
+{name:"مينيو ID + F2 طيران",price:150,link:"#support"}
+];
+let products=JSON.parse(localStorage.getItem("mafiaProducts")||"null")||defaultProducts;
+let editIndex=-1;
+
+function save(){localStorage.setItem("mafiaProducts",JSON.stringify(products));render();}
+function render(){
+const box=document.getElementById("products");
+box.innerHTML=products.map((p,i)=>`<div class="card"><h3>${esc(p.name)}</h3><div><div class="price">$${Number(p.price).toFixed(0)}</div><a class="buy" href="${safeUrl(p.link)}">BUY NOW</a></div></div>`).join("");
+const list=document.getElementById("adminList");
+list.innerHTML=products.map((p,i)=>`<div class="admin-item"><span>${esc(p.name)} — $${p.price}</span><button class="danger" onclick="removeProduct(${i})">DELETE</button></div>`).join("");
+}
+function addProduct(){
+const n=document.getElementById("name").value.trim(),p=document.getElementById("price").value,l=document.getElementById("link").value.trim()||"#support";
+if(!n||!p){alert("Enter product name and price.");return}
+products.push({name:n,price:Number(p),link:l});save();
+document.getElementById("name").value="";document.getElementById("price").value="";document.getElementById("link").value="";
+}
+function removeProduct(i){if(confirm("Delete this product?")){products.splice(i,1);save();}}
+function openLogin(){document.getElementById("loginModal").style.display="flex";document.getElementById("pin").focus()}
+function login(){if(document.getElementById("pin").value===OWNER_PIN){document.getElementById("loginModal").style.display="none";document.getElementById("adminModal").style.display="flex";document.getElementById("pin").value=""}else alert("Wrong PIN.")}
+function closeModals(){document.querySelectorAll(".modal").forEach(x=>x.style.display="none")}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function safeUrl(s){return /^(https?:|#)/i.test(s)?s:"#support"}
+render();
+</script>
+</body>
+</html>
